@@ -118,7 +118,7 @@ jobs:
           Compress-Archive -Path "$outputPath/*" -DestinationPath $archiveName -Force
 
       - name: Create archive (Unix)
-        if: startsWith(matrix.platform, 'win-') == false
+        if: "!startsWith(matrix.platform, 'win-')"
         run: |
           cd ./publish/${{ matrix.platform }}
           
@@ -137,7 +137,7 @@ jobs:
           retention-days: 90
 
       - name: Upload Unix artifacts
-        if: startsWith(matrix.platform, 'win-') == false
+        if: "!startsWith(matrix.platform, 'win-')"
         uses: actions/upload-artifact@v4
         with:
           name: binary-${{ matrix.platform }}
