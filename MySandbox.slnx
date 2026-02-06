@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="MySandbox.ClassLibrary/MySandbox.ClassLibrary.csproj" />
+  <Project Path="MySandbox.Console/MySandbox.Console.csproj" />
+  <Project Path="MySandbox.Tests/MySandbox.Tests.csproj" />
+</Solution>

@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<ItemGroup>
+		<!-- Needed: ServiceCollection, ServiceProvider, AddDbContext extension -->
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+
+		<!-- Needed: AddLogging extension method -->
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.2" />
+
+		<!-- Needed: AddConsole() extension method -->
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.2" />
+
+		<!-- Needed: AddDbContext extension method (transitive from class lib isn't enough) -->
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.2" />
+
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.2" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\MySandbox.ClassLibrary\MySandbox.ClassLibrary.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Update="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+</Project>
