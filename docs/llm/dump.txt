@@ -1,7 +1,7 @@
 
 ===============================================================================
 ASP.NET PROJECT EXPORT
-Generated: 02/06/2026 16:14:18
+Generated: 02/06/2026 16:18:23
 Project Path: C:\Users\kushal\source\repos\MySandbox
 ===============================================================================
 
@@ -606,8 +606,8 @@ FILE CONTENTS:
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\.github\workflows\build.yml
-SIZE: 7.89 KB
-MODIFIED: 02/06/2026 16:13:53
+SIZE: 7.91 KB
+MODIFIED: 02/06/2026 16:18:07
 ================================================================================
 
 name: Build, Test, and Release
@@ -707,6 +707,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Publish self-contained binary
+        shell: bash
         run: |
           dotnet publish ${{ env.CONSOLE_PROJECT }} \
             --configuration Release \
@@ -2632,7 +2633,7 @@ public class TestLogger<T> : ILogger<T>
 
 
 ===============================================================================
-EXPORT COMPLETED: 02/06/2026 16:14:29
+EXPORT COMPLETED: 02/06/2026 16:18:32
 Total Files Exported: 25
 Output File: .\docs\\llm\\dump.txt
 ===============================================================================

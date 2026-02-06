@@ -95,6 +95,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Publish self-contained binary
+        shell: bash
         run: |
           dotnet publish ${{ env.CONSOLE_PROJECT }} \
             --configuration Release \
