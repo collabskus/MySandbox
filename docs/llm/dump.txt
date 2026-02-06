@@ -1,7 +1,7 @@
 
 ===============================================================================
 ASP.NET PROJECT EXPORT
-Generated: 02/06/2026 15:52:46
+Generated: 02/06/2026 16:05:38
 Project Path: C:\Users\kushal\source\repos\MySandbox
 ===============================================================================
 
@@ -14,6 +14,7 @@ C:\USERS\KUSHAL\SOURCE\REPOS\MYSANDBOX
 |   .gitignore
 |   Export.ps1
 |   MySandbox.slnx
+|   README.md
 |   
 +---.github
 |   \---workflows
@@ -605,8 +606,8 @@ FILE CONTENTS:
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\.github\workflows\build.yml
-SIZE: 7.89 KB
-MODIFIED: 02/06/2026 15:48:57
+SIZE: 7.9 KB
+MODIFIED: 02/06/2026 16:05:00
 ================================================================================
 
 name: Build, Test, and Release
@@ -729,7 +730,7 @@ jobs:
           Compress-Archive -Path "$outputPath/*" -DestinationPath $archiveName -Force
 
       - name: Create archive (Unix)
-        if: "!startsWith(matrix.platform, 'win-')"
+        if: startsWith(matrix.platform, 'win-') == false
         run: |
           cd ./publish/${{ matrix.platform }}
           
@@ -748,7 +749,7 @@ jobs:
           retention-days: 90
 
       - name: Upload Unix artifacts
-        if: "!startsWith(matrix.platform, 'win-')"
+        if: startsWith(matrix.platform, 'win-') == false
         uses: actions/upload-artifact@v4
         with:
           name: binary-${{ matrix.platform }}
@@ -2631,7 +2632,7 @@ public class TestLogger<T> : ILogger<T>
 
 
 ===============================================================================
-EXPORT COMPLETED: 02/06/2026 15:52:53
+EXPORT COMPLETED: 02/06/2026 16:05:44
 Total Files Exported: 25
 Output File: .\docs\\llm\\dump.txt
 ===============================================================================
