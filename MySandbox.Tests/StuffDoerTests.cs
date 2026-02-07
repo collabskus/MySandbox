@@ -1,4 +1,5 @@
 ﻿using AwesomeAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MySandbox.ClassLibrary;
 using Xunit;

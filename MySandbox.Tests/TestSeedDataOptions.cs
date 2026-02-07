@@ -10,7 +10,7 @@ public class TestSeedDataOptions
     {
         return Options.Create(new SeedDataOptions
         {
-            Products = products ?? new List<string> { "Alpha", "Beta", "Gamma" }
+            Products = products ?? ["Alpha", "Beta", "Gamma"]
         });
     }
 }
