@@ -1,7 +1,7 @@
 
 ===============================================================================
 ASP.NET PROJECT EXPORT
-Generated: 02/07/2026 12:04:04
+Generated: 02/07/2026 13:35:02
 Project Path: C:\Users\kushal\source\repos\MySandbox
 ===============================================================================
 
@@ -1377,8 +1377,8 @@ public class BusinessRulesOptions
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.ClassLibrary\ICanDoStuff.cs
-SIZE: 0.1 KB
-MODIFIED: 02/06/2026 11:01:38
+SIZE: 0.16 KB
+MODIFIED: 02/07/2026 13:34:10
 ================================================================================
 
 namespace MySandbox.ClassLibrary;
@@ -1386,15 +1386,15 @@ namespace MySandbox.ClassLibrary;
 public interface ICanDoStuff
 {
     Task DoStuffAsync();
+    Task ImportLargeDatasetAsync(int count = 1_000_000);
 }
-
 
 
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.ClassLibrary\ICanDoStuffA.cs
 SIZE: 0.1 KB
-MODIFIED: 02/06/2026 11:01:44
+MODIFIED: 02/07/2026 13:34:23
 ================================================================================
 
 namespace MySandbox.ClassLibrary;
@@ -1406,11 +1406,10 @@ public interface ICanDoStuffA
 
 
 
-
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.ClassLibrary\ICanDoStuffB.cs
 SIZE: 0.1 KB
-MODIFIED: 02/06/2026 11:01:47
+MODIFIED: 02/07/2026 13:34:33
 ================================================================================
 
 namespace MySandbox.ClassLibrary;
@@ -1419,7 +1418,6 @@ public interface ICanDoStuffB
 {
     Task DoStuffBAsync();
 }
-
 
 
 
@@ -1518,10 +1516,11 @@ public class StuffDbContext(DbContextOptions<StuffDbContext> options) : DbContex
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.ClassLibrary\StuffDoer.cs
-SIZE: 2.74 KB
-MODIFIED: 02/07/2026 11:42:11
+SIZE: 4.58 KB
+MODIFIED: 02/07/2026 13:32:52
 ================================================================================
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -1529,28 +1528,34 @@ namespace MySandbox.ClassLibrary;
 
 public class StuffDoer(
     ILogger<StuffDoer> logger,
-    IStuffRepository repository,
+    StuffDbContext dbContext,
     IOptions<BusinessRulesOptions> businessRules,
     IOptions<SeedDataOptions> seedData)
     : ICanDoStuff, ICanDoStuffA, ICanDoStuffB
 {
     private readonly ILogger<StuffDoer> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly IStuffRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+    private readonly StuffDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     private readonly BusinessRulesOptions _businessRules = businessRules?.Value ?? throw new ArgumentNullException(nameof(businessRules));
     private readonly SeedDataOptions _seedData = seedData?.Value ?? throw new ArgumentNullException(nameof(seedData));
 
     public async Task DoStuffAsync()
     {
         _logger.LogInformation("Generating daily report");
-        var items = await _repository.GetAllAsync();
-
+        
+        // FIXED: Use database-side filtering instead of loading everything into memory
         var today = DateTime.UtcNow.Date;
-        var todaysItems = items.Where(x => x.CreatedAt.Date == today).ToList();
+        var tomorrow = today.AddDays(1);
+        
+        var todayCount = await _dbContext.StuffItems
+            .Where(x => x.CreatedAt >= today && x.CreatedAt < tomorrow)
+            .CountAsync();
+        
+        var totalCount = await _dbContext.StuffItems.CountAsync();
 
         _logger.LogInformation(
             "Daily Report: {TodayCount} items created today, {TotalCount} items total",
-            todaysItems.Count,
-            items.Count());
+            todayCount,
+            totalCount);
     }
 
     public async Task DoStuffAAsync()
@@ -1558,16 +1563,14 @@ public class StuffDoer(
         _logger.LogInformation("Running cleanup process for items older than {Days} days",
             _businessRules.DataRetentionDays);
 
-        var items = await _repository.GetAllAsync();
+        // FIXED: Use ExecuteDeleteAsync for bulk deletion instead of loading into memory and deleting one-by-one
         var cutoffDate = DateTime.UtcNow.AddDays(-_businessRules.DataRetentionDays);
-        var oldItems = items.Where(x => x.CreatedAt < cutoffDate).ToList();
+        
+        var deletedCount = await _dbContext.StuffItems
+            .Where(x => x.CreatedAt < cutoffDate)
+            .ExecuteDeleteAsync();
 
-        foreach (var item in oldItems)
-        {
-            await _repository.RemoveAsync(item.Id);
-        }
-
-        _logger.LogInformation("Cleanup completed: Removed {Count} old items", oldItems.Count);
+        _logger.LogInformation("Cleanup completed: Removed {Count} old items", deletedCount);
     }
 
     public async Task DoStuffBAsync()
@@ -1577,26 +1580,77 @@ public class StuffDoer(
 
         var sampleData = _seedData.Products;
 
-        var existingItems = await _repository.GetAllAsync();
-        var existingNames = existingItems.Select(x => x.Name).ToHashSet();
-
+        // FIXED: Use database-side duplicate checking instead of loading all existing items
         var newItemsAdded = 0;
+        var skippedCount = 0;
 
         foreach (var item in sampleData)
         {
             var fullName = $"{_businessRules.BatchOperationPrefix}{item}";
 
-            if (!existingNames.Contains(fullName))
+            // Check if item exists using a database query instead of in-memory collection
+            var exists = await _dbContext.StuffItems
+                .AnyAsync(x => x.Name == fullName);
+
+            if (!exists)
             {
-                await _repository.AddAsync(fullName);
+                _dbContext.StuffItems.Add(new StuffItem
+                {
+                    Name = fullName,
+                    CreatedAt = DateTime.UtcNow
+                });
                 newItemsAdded++;
             }
+            else
+            {
+                skippedCount++;
+            }
+        }
+
+        if (newItemsAdded > 0)
+        {
+            await _dbContext.SaveChangesAsync();
         }
 
         _logger.LogInformation(
             "Import completed: {NewCount} new items added, {SkippedCount} duplicates skipped",
             newItemsAdded,
-            sampleData.Count - newItemsAdded);
+            skippedCount);
+    }
+
+    public async Task ImportLargeDatasetAsync(int count = 1_000_000)
+    {
+        _logger.LogInformation("Importing {Count} items for performance testing", count);
+
+        const int batchSize = 10000;
+        var itemsAdded = 0;
+
+        for (var i = 0; i < count; i += batchSize)
+        {
+            var currentBatchSize = Math.Min(batchSize, count - i);
+            var items = new List<StuffItem>(currentBatchSize);
+
+            for (var j = 0; j < currentBatchSize; j++)
+            {
+                items.Add(new StuffItem
+                {
+                    Name = $"LoadTest-{i + j + 1}",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            await _dbContext.StuffItems.AddRangeAsync(items);
+            await _dbContext.SaveChangesAsync();
+            
+            itemsAdded += currentBatchSize;
+            
+            if (itemsAdded % 50000 == 0)
+            {
+                _logger.LogInformation("Progress: {ItemsAdded}/{TotalCount} items added", itemsAdded, count);
+            }
+        }
+
+        _logger.LogInformation("Large dataset import completed: {Count} items added", itemsAdded);
     }
 }
 
@@ -2791,8 +2845,8 @@ MODIFIED: 02/06/2026 11:30:52
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.Console\Program.cs
-SIZE: 3.52 KB
-MODIFIED: 02/07/2026 11:43:05
+SIZE: 5.01 KB
+MODIFIED: 02/07/2026 13:33:07
 ================================================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -2805,7 +2859,7 @@ namespace MySandbox.Console;
 
 public class Program
 {
-    public static async Task Main()
+    public static async Task Main(string[] args)
     {
         // Build configuration
         var configuration = new ConfigurationBuilder()
@@ -2822,8 +2876,23 @@ public class Program
         // Ensure database is created and migrated
         await EnsureDatabaseCreatedAsync(serviceProvider);
 
-        // Resolve and use services
-        var stuffDoer = serviceProvider.GetRequiredService<ICanDoStuff>();
+        // Check for load test flag
+        var isLoadTest = args.Contains("--load-test") || args.Contains("-l");
+        var loadTestCount = GetLoadTestCount(args);
+
+        if (isLoadTest)
+        {
+            System.Console.WriteLine($"Running load test with {loadTestCount:N0} items...\n");
+            var stuffDoer = serviceProvider.GetRequiredService<ICanDoStuff>();
+            await stuffDoer.ImportLargeDatasetAsync(loadTestCount);
+            
+            System.Console.WriteLine("\nPress any key to exit...");
+            System.Console.ReadKey();
+            return;
+        }
+
+        // Resolve and use services for normal operation
+        var stuffDoerService = serviceProvider.GetRequiredService<ICanDoStuff>();
         var stuffDoerA = serviceProvider.GetRequiredService<ICanDoStuffA>();
         var stuffDoerB = serviceProvider.GetRequiredService<ICanDoStuffB>();
 
@@ -2832,20 +2901,45 @@ public class Program
 
         await stuffDoerA.DoStuffAAsync();
         await stuffDoerB.DoStuffBAsync();
-        await stuffDoer.DoStuffAsync();
+        await stuffDoerService.DoStuffAsync();
 
-        // Demonstrate retrieval by ID
-        var repository = serviceProvider.GetRequiredService<IStuffRepository>();
-        var allItems = await repository.GetAllAsync();
+        // Demonstrate retrieval by querying database directly (no repository loading everything)
+        var dbContext = serviceProvider.GetRequiredService<StuffDbContext>();
+        var totalCount = await dbContext.StuffItems.CountAsync();
 
-        System.Console.WriteLine($"\nTotal items in database: {allItems.Count()}");
-        foreach (var item in allItems)
+        System.Console.WriteLine($"\nTotal items in database: {totalCount}");
+        
+        // Only show items if count is reasonable
+        if (totalCount <= 100)
         {
-            System.Console.WriteLine($"  - {item.Name} (ID: {item.Id}, Created: {item.CreatedAt:yyyy-MM-dd HH:mm:ss})");
+            var items = await dbContext.StuffItems
+                .OrderBy(x => x.CreatedAt)
+                .ToListAsync();
+                
+            foreach (var item in items)
+            {
+                System.Console.WriteLine($"  - {item.Name} (ID: {item.Id}, Created: {item.CreatedAt:yyyy-MM-dd HH:mm:ss})");
+            }
+        }
+        else
+        {
+            System.Console.WriteLine("(Too many items to display - use database queries to explore data)");
         }
 
         System.Console.WriteLine("\nPress any key to exit...");
         System.Console.ReadKey();
+    }
+
+    private static int GetLoadTestCount(string[] args)
+    {
+        for (int i = 0; i < args.Length - 1; i++)
+        {
+            if ((args[i] == "--load-test" || args[i] == "-l") && int.TryParse(args[i + 1], out var count))
+            {
+                return count;
+            }
+        }
+        return 1_000_000; // Default to 1 million
     }
 
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
@@ -2870,7 +2964,7 @@ public class Program
 #endif
         });
 
-        // Register repository
+        // Register repository (kept for backward compatibility, but direct DbContext usage is preferred)
         services.AddScoped<IStuffRepository, StuffRepository>();
 
         // Register StuffDoer for all three interfaces
@@ -2897,7 +2991,7 @@ public class Program
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.Tests\DatabaseTestBase.cs
 SIZE: 0.77 KB
-MODIFIED: 02/06/2026 11:44:24
+MODIFIED: 02/07/2026 13:33:58
 ================================================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -2934,11 +3028,12 @@ public class DatabaseTestBase : IDisposable
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.Tests\IntegrationTests.cs
-SIZE: 2.46 KB
-MODIFIED: 02/07/2026 11:45:14
+SIZE: 4.03 KB
+MODIFIED: 02/07/2026 13:33:44
 ================================================================================
 
 using AwesomeAssertions;
+using Microsoft.EntityFrameworkCore;
 using MySandbox.ClassLibrary;
 using Xunit;
 
@@ -2955,7 +3050,7 @@ public class IntegrationTests : DatabaseTestBase
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
         var seedData = TestSeedDataOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
 
         // Act
         await stuffDoer.DoStuffBAsync(); // Imports Batch-Alpha, Batch-Beta, Batch-Gamma
@@ -2963,8 +3058,8 @@ public class IntegrationTests : DatabaseTestBase
         await stuffDoer.DoStuffAsync(); // Generate report
 
         // Assert
-        var allItems = await repository.GetAllAsync();
-        allItems.Count().Should().Be(4);
+        var allItems = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
+        allItems.Count.Should().Be(4);
         allItems.Should().Contain(x => x.Name == "Batch-Alpha");
         allItems.Should().Contain(x => x.Name == "Batch-Beta");
         allItems.Should().Contain(x => x.Name == "Batch-Gamma");
@@ -2980,7 +3075,7 @@ public class IntegrationTests : DatabaseTestBase
 
         // Act
         await repository.AddAsync("Persistent Item");
-        var itemsBeforeSave = await repository.GetAllAsync();
+        var itemsBeforeSave = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
         var itemId = itemsBeforeSave.First().Id;
 
         var newRepository = new StuffRepository(new TestLogger<StuffRepository>(), DbContext);
@@ -3006,8 +3101,48 @@ public class IntegrationTests : DatabaseTestBase
         await Task.WhenAll(tasks);
 
         // Assert
-        var allItems = await repository.GetAllAsync();
-        allItems.Count().Should().Be(10);
+        var allItems = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
+        allItems.Count.Should().Be(10);
+    }
+
+    [Fact]
+    public async Task CleanupWithLargeDataset_PerformsEfficiently()
+    {
+        // Arrange
+        var stuffDoerLogger = new TestLogger<StuffDoer>();
+        var businessRules = TestBusinessRulesOptions.Create(dataRetentionDays: 30);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
+
+        // Add 1000 old items
+        var oldItems = Enumerable.Range(1, 1000).Select(i => new StuffItem
+        {
+            Name = $"Old-{i}",
+            CreatedAt = DateTime.UtcNow.AddDays(-31)
+        }).ToList();
+        
+        DbContext.StuffItems.AddRange(oldItems);
+        
+        // Add 100 recent items
+        var recentItems = Enumerable.Range(1, 100).Select(i => new StuffItem
+        {
+            Name = $"Recent-{i}",
+            CreatedAt = DateTime.UtcNow
+        }).ToList();
+        
+        DbContext.StuffItems.AddRange(recentItems);
+        await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Act
+        await stuffDoer.DoStuffAAsync();
+
+        // Assert
+        var remainingCount = await DbContext.StuffItems.CountAsync(TestContext.Current.CancellationToken);
+        remainingCount.Should().Be(100);
+
+        stuffDoerLogger.LogEntries.Should().Contain(x =>
+            x.LogLevel == LogLevel.Information &&
+            x.Message.Contains("Removed 1000 old items"));
     }
 }
 
@@ -3137,8 +3272,8 @@ public class StuffDbContextTests : DatabaseTestBase
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.Tests\StuffDoerTests.cs
-SIZE: 6.38 KB
-MODIFIED: 02/07/2026 11:48:51
+SIZE: 6.73 KB
+MODIFIED: 02/07/2026 13:33:33
 ================================================================================
 
 using AwesomeAssertions;
@@ -3155,14 +3290,13 @@ public class StuffDoerTests : DatabaseTestBase
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
         var seedData = TestSeedDataOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
 
-        await repository.AddAsync("Today Item 1");
-        await repository.AddAsync("Today Item 2");
+        DbContext.StuffItems.Add(new StuffItem { Name = "Today Item 1", CreatedAt = DateTime.UtcNow });
+        DbContext.StuffItems.Add(new StuffItem { Name = "Today Item 2", CreatedAt = DateTime.UtcNow });
+        await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         await stuffDoer.DoStuffAsync();
@@ -3182,29 +3316,32 @@ public class StuffDoerTests : DatabaseTestBase
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create(dataRetentionDays: 30);
         var seedData = TestSeedDataOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
 
-        // Add old item (manually set CreatedAt to simulate old data)
+        // Add old item
         var oldItem = new StuffItem
         {
             Name = "Old Item",
             CreatedAt = DateTime.UtcNow.AddDays(-31)
         };
         DbContext.StuffItems.Add(oldItem);
-        await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
-
+        
         // Add recent item
-        await repository.AddAsync("Recent Item");
+        var recentItem = new StuffItem
+        {
+            Name = "Recent Item",
+            CreatedAt = DateTime.UtcNow
+        };
+        DbContext.StuffItems.Add(recentItem);
+        await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         await stuffDoer.DoStuffAAsync();
 
         // Assert
-        var remainingItems = await repository.GetAllAsync();
+        var remainingItems = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
         remainingItems.Should().ContainSingle().Which.Name.Should().Be("Recent Item");
 
         stuffDoerLogger.LogEntries.Should().Contain(x =>
@@ -3217,17 +3354,15 @@ public class StuffDoerTests : DatabaseTestBase
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create(batchOperationPrefix: "Test-");
         var seedData = TestSeedDataOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
 
         // Act
         await stuffDoer.DoStuffBAsync();
 
         // Assert
-        var items = await repository.GetAllAsync();
+        var items = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
         items.Select(x => x.Name).Should().BeEquivalentTo("Test-Alpha", "Test-Beta", "Test-Gamma");
 
         stuffDoerLogger.LogEntries.Should().Contain(x =>
@@ -3240,20 +3375,19 @@ public class StuffDoerTests : DatabaseTestBase
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
         var seedData = TestSeedDataOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
 
         // Pre-add one item
-        await repository.AddAsync("Batch-Alpha");
+        DbContext.StuffItems.Add(new StuffItem { Name = "Batch-Alpha", CreatedAt = DateTime.UtcNow });
+        await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         await stuffDoer.DoStuffBAsync();
 
         // Assert
-        var items = await repository.GetAllAsync();
+        var items = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
         items.Should().HaveCount(3)
             .And.Subject.Select(x => x.Name)
             .Should().Contain(["Batch-Beta", "Batch-Gamma"]);
@@ -3268,17 +3402,15 @@ public class StuffDoerTests : DatabaseTestBase
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
         // Arrange
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
         var seedData = TestSeedDataOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(null!, repository, businessRules, seedData));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(null!, DbContext, businessRules, seedData));
     }
 
     [Fact]
-    public void Constructor_NullRepository_ThrowsArgumentNullException()
+    public void Constructor_NullDbContext_ThrowsArgumentNullException()
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
@@ -3294,26 +3426,42 @@ public class StuffDoerTests : DatabaseTestBase
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var seedData = TestSeedDataOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, repository, null!, seedData));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, DbContext, null!, seedData));
     }
-
 
     [Fact]
     public void Constructor_NullSeedData_ThrowsArgumentNullException()
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, repository, businessRules, null!));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, DbContext, businessRules, null!));
+    }
+
+    [Fact]
+    public async Task ImportLargeDatasetAsync_CreatesSpecifiedNumberOfItems()
+    {
+        // Arrange
+        var stuffDoerLogger = new TestLogger<StuffDoer>();
+        var businessRules = TestBusinessRulesOptions.Create();
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
+
+        // Act - Import a small number for testing
+        await stuffDoer.ImportLargeDatasetAsync(100);
+
+        // Assert
+        var count = await DbContext.StuffItems.CountAsync(TestContext.Current.CancellationToken);
+        count.Should().Be(100);
+
+        stuffDoerLogger.LogEntries.Should().Contain(x =>
+            x.LogLevel == LogLevel.Information &&
+            x.Message.Contains("Large dataset import completed"));
     }
 }
 
@@ -3714,7 +3862,7 @@ public class TestSeedDataOptions
 
 
 ===============================================================================
-EXPORT COMPLETED: 02/07/2026 12:04:11
+EXPORT COMPLETED: 02/07/2026 13:35:08
 Total Files Exported: 27
-Output File: .\docs\\llm\\dump.txt
+Output File: .\docs\llm\dump.txt
 ===============================================================================

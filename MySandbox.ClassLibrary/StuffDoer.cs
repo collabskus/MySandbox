@@ -1,32 +1,39 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace MySandbox.ClassLibrary;
 
 public class StuffDoer(
     ILogger<StuffDoer> logger,
-    IStuffRepository repository,
+    StuffDbContext dbContext,
     IOptions<BusinessRulesOptions> businessRules,
     IOptions<SeedDataOptions> seedData)
     : ICanDoStuff, ICanDoStuffA, ICanDoStuffB
 {
     private readonly ILogger<StuffDoer> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly IStuffRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+    private readonly StuffDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     private readonly BusinessRulesOptions _businessRules = businessRules?.Value ?? throw new ArgumentNullException(nameof(businessRules));
     private readonly SeedDataOptions _seedData = seedData?.Value ?? throw new ArgumentNullException(nameof(seedData));
 
     public async Task DoStuffAsync()
     {
         _logger.LogInformation("Generating daily report");
-        var items = await _repository.GetAllAsync();
-
+        
+        // FIXED: Use database-side filtering instead of loading everything into memory
         var today = DateTime.UtcNow.Date;
-        var todaysItems = items.Where(x => x.CreatedAt.Date == today).ToList();
+        var tomorrow = today.AddDays(1);
+        
+        var todayCount = await _dbContext.StuffItems
+            .Where(x => x.CreatedAt >= today && x.CreatedAt < tomorrow)
+            .CountAsync();
+        
+        var totalCount = await _dbContext.StuffItems.CountAsync();
 
         _logger.LogInformation(
             "Daily Report: {TodayCount} items created today, {TotalCount} items total",
-            todaysItems.Count,
-            items.Count());
+            todayCount,
+            totalCount);
     }
 
     public async Task DoStuffAAsync()
@@ -34,16 +41,14 @@ public class StuffDoer(
         _logger.LogInformation("Running cleanup process for items older than {Days} days",
             _businessRules.DataRetentionDays);
 
-        var items = await _repository.GetAllAsync();
+        // FIXED: Use ExecuteDeleteAsync for bulk deletion instead of loading into memory and deleting one-by-one
         var cutoffDate = DateTime.UtcNow.AddDays(-_businessRules.DataRetentionDays);
-        var oldItems = items.Where(x => x.CreatedAt < cutoffDate).ToList();
+        
+        var deletedCount = await _dbContext.StuffItems
+            .Where(x => x.CreatedAt < cutoffDate)
+            .ExecuteDeleteAsync();
 
-        foreach (var item in oldItems)
-        {
-            await _repository.RemoveAsync(item.Id);
-        }
-
-        _logger.LogInformation("Cleanup completed: Removed {Count} old items", oldItems.Count);
+        _logger.LogInformation("Cleanup completed: Removed {Count} old items", deletedCount);
     }
 
     public async Task DoStuffBAsync()
@@ -53,25 +58,76 @@ public class StuffDoer(
 
         var sampleData = _seedData.Products;
 
-        var existingItems = await _repository.GetAllAsync();
-        var existingNames = existingItems.Select(x => x.Name).ToHashSet();
-
+        // FIXED: Use database-side duplicate checking instead of loading all existing items
         var newItemsAdded = 0;
+        var skippedCount = 0;
 
         foreach (var item in sampleData)
         {
             var fullName = $"{_businessRules.BatchOperationPrefix}{item}";
 
-            if (!existingNames.Contains(fullName))
+            // Check if item exists using a database query instead of in-memory collection
+            var exists = await _dbContext.StuffItems
+                .AnyAsync(x => x.Name == fullName);
+
+            if (!exists)
             {
-                await _repository.AddAsync(fullName);
+                _dbContext.StuffItems.Add(new StuffItem
+                {
+                    Name = fullName,
+                    CreatedAt = DateTime.UtcNow
+                });
                 newItemsAdded++;
             }
+            else
+            {
+                skippedCount++;
+            }
+        }
+
+        if (newItemsAdded > 0)
+        {
+            await _dbContext.SaveChangesAsync();
         }
 
         _logger.LogInformation(
             "Import completed: {NewCount} new items added, {SkippedCount} duplicates skipped",
             newItemsAdded,
-            sampleData.Count - newItemsAdded);
+            skippedCount);
+    }
+
+    public async Task ImportLargeDatasetAsync(int count = 1_000_000)
+    {
+        _logger.LogInformation("Importing {Count} items for performance testing", count);
+
+        const int batchSize = 10000;
+        var itemsAdded = 0;
+
+        for (var i = 0; i < count; i += batchSize)
+        {
+            var currentBatchSize = Math.Min(batchSize, count - i);
+            var items = new List<StuffItem>(currentBatchSize);
+
+            for (var j = 0; j < currentBatchSize; j++)
+            {
+                items.Add(new StuffItem
+                {
+                    Name = $"LoadTest-{i + j + 1}",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            await _dbContext.StuffItems.AddRangeAsync(items);
+            await _dbContext.SaveChangesAsync();
+            
+            itemsAdded += currentBatchSize;
+            
+            if (itemsAdded % 50000 == 0)
+            {
+                _logger.LogInformation("Progress: {ItemsAdded}/{TotalCount} items added", itemsAdded, count);
+            }
+        }
+
+        _logger.LogInformation("Large dataset import completed: {Count} items added", itemsAdded);
     }
 }

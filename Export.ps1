@@ -1,9 +1,10 @@
 # Export ASP.NET Project Files to Single Text File
 # PowerShell 5 compatible script
+# Use this to create a comprehensive dump of your project for LLM code review
 
 param(
     [string]$ProjectPath = ".",
-    [string]$OutputFile = "docs//llm//dump.txt"
+    [string]$OutputFile = "docs/llm/dump.txt"
 )
 
 # Define file extensions to include

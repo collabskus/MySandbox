@@ -12,14 +12,13 @@ public class StuffDoerTests : DatabaseTestBase
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
         var seedData = TestSeedDataOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
 
-        await repository.AddAsync("Today Item 1");
-        await repository.AddAsync("Today Item 2");
+        DbContext.StuffItems.Add(new StuffItem { Name = "Today Item 1", CreatedAt = DateTime.UtcNow });
+        DbContext.StuffItems.Add(new StuffItem { Name = "Today Item 2", CreatedAt = DateTime.UtcNow });
+        await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         await stuffDoer.DoStuffAsync();
@@ -39,29 +38,32 @@ public class StuffDoerTests : DatabaseTestBase
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create(dataRetentionDays: 30);
         var seedData = TestSeedDataOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
 
-        // Add old item (manually set CreatedAt to simulate old data)
+        // Add old item
         var oldItem = new StuffItem
         {
             Name = "Old Item",
             CreatedAt = DateTime.UtcNow.AddDays(-31)
         };
         DbContext.StuffItems.Add(oldItem);
-        await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
-
+        
         // Add recent item
-        await repository.AddAsync("Recent Item");
+        var recentItem = new StuffItem
+        {
+            Name = "Recent Item",
+            CreatedAt = DateTime.UtcNow
+        };
+        DbContext.StuffItems.Add(recentItem);
+        await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         await stuffDoer.DoStuffAAsync();
 
         // Assert
-        var remainingItems = await repository.GetAllAsync();
+        var remainingItems = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
         remainingItems.Should().ContainSingle().Which.Name.Should().Be("Recent Item");
 
         stuffDoerLogger.LogEntries.Should().Contain(x =>
@@ -74,17 +76,15 @@ public class StuffDoerTests : DatabaseTestBase
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create(batchOperationPrefix: "Test-");
         var seedData = TestSeedDataOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
 
         // Act
         await stuffDoer.DoStuffBAsync();
 
         // Assert
-        var items = await repository.GetAllAsync();
+        var items = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
         items.Select(x => x.Name).Should().BeEquivalentTo("Test-Alpha", "Test-Beta", "Test-Gamma");
 
         stuffDoerLogger.LogEntries.Should().Contain(x =>
@@ -97,20 +97,19 @@ public class StuffDoerTests : DatabaseTestBase
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
         var seedData = TestSeedDataOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
 
         // Pre-add one item
-        await repository.AddAsync("Batch-Alpha");
+        DbContext.StuffItems.Add(new StuffItem { Name = "Batch-Alpha", CreatedAt = DateTime.UtcNow });
+        await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         await stuffDoer.DoStuffBAsync();
 
         // Assert
-        var items = await repository.GetAllAsync();
+        var items = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
         items.Should().HaveCount(3)
             .And.Subject.Select(x => x.Name)
             .Should().Contain(["Batch-Beta", "Batch-Gamma"]);
@@ -125,17 +124,15 @@ public class StuffDoerTests : DatabaseTestBase
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
         // Arrange
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
         var seedData = TestSeedDataOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(null!, repository, businessRules, seedData));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(null!, DbContext, businessRules, seedData));
     }
 
     [Fact]
-    public void Constructor_NullRepository_ThrowsArgumentNullException()
+    public void Constructor_NullDbContext_ThrowsArgumentNullException()
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
@@ -151,25 +148,41 @@ public class StuffDoerTests : DatabaseTestBase
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var seedData = TestSeedDataOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, repository, null!, seedData));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, DbContext, null!, seedData));
     }
-
 
     [Fact]
     public void Constructor_NullSeedData_ThrowsArgumentNullException()
     {
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
-        var repositoryLogger = new TestLogger<StuffRepository>();
-        var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, repository, businessRules, null!));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, DbContext, businessRules, null!));
+    }
+
+    [Fact]
+    public async Task ImportLargeDatasetAsync_CreatesSpecifiedNumberOfItems()
+    {
+        // Arrange
+        var stuffDoerLogger = new TestLogger<StuffDoer>();
+        var businessRules = TestBusinessRulesOptions.Create();
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
+
+        // Act - Import a small number for testing
+        await stuffDoer.ImportLargeDatasetAsync(100);
+
+        // Assert
+        var count = await DbContext.StuffItems.CountAsync(TestContext.Current.CancellationToken);
+        count.Should().Be(100);
+
+        stuffDoerLogger.LogEntries.Should().Contain(x =>
+            x.LogLevel == LogLevel.Information &&
+            x.Message.Contains("Large dataset import completed"));
     }
 }

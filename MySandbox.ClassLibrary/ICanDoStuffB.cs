@@ -4,4 +4,3 @@ public interface ICanDoStuffB
 {
     Task DoStuffBAsync();
 }
-

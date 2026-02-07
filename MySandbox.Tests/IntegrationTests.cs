@@ -1,4 +1,5 @@
 ﻿using AwesomeAssertions;
+using Microsoft.EntityFrameworkCore;
 using MySandbox.ClassLibrary;
 using Xunit;
 
@@ -15,7 +16,7 @@ public class IntegrationTests : DatabaseTestBase
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
         var seedData = TestSeedDataOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
 
         // Act
         await stuffDoer.DoStuffBAsync(); // Imports Batch-Alpha, Batch-Beta, Batch-Gamma
@@ -23,8 +24,8 @@ public class IntegrationTests : DatabaseTestBase
         await stuffDoer.DoStuffAsync(); // Generate report
 
         // Assert
-        var allItems = await repository.GetAllAsync();
-        allItems.Count().Should().Be(4);
+        var allItems = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
+        allItems.Count.Should().Be(4);
         allItems.Should().Contain(x => x.Name == "Batch-Alpha");
         allItems.Should().Contain(x => x.Name == "Batch-Beta");
         allItems.Should().Contain(x => x.Name == "Batch-Gamma");
@@ -40,7 +41,7 @@ public class IntegrationTests : DatabaseTestBase
 
         // Act
         await repository.AddAsync("Persistent Item");
-        var itemsBeforeSave = await repository.GetAllAsync();
+        var itemsBeforeSave = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
         var itemId = itemsBeforeSave.First().Id;
 
         var newRepository = new StuffRepository(new TestLogger<StuffRepository>(), DbContext);
@@ -66,7 +67,47 @@ public class IntegrationTests : DatabaseTestBase
         await Task.WhenAll(tasks);
 
         // Assert
-        var allItems = await repository.GetAllAsync();
-        allItems.Count().Should().Be(10);
+        var allItems = await DbContext.StuffItems.ToListAsync(TestContext.Current.CancellationToken);
+        allItems.Count.Should().Be(10);
+    }
+
+    [Fact]
+    public async Task CleanupWithLargeDataset_PerformsEfficiently()
+    {
+        // Arrange
+        var stuffDoerLogger = new TestLogger<StuffDoer>();
+        var businessRules = TestBusinessRulesOptions.Create(dataRetentionDays: 30);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, DbContext, businessRules, seedData);
+
+        // Add 1000 old items
+        var oldItems = Enumerable.Range(1, 1000).Select(i => new StuffItem
+        {
+            Name = $"Old-{i}",
+            CreatedAt = DateTime.UtcNow.AddDays(-31)
+        }).ToList();
+        
+        DbContext.StuffItems.AddRange(oldItems);
+        
+        // Add 100 recent items
+        var recentItems = Enumerable.Range(1, 100).Select(i => new StuffItem
+        {
+            Name = $"Recent-{i}",
+            CreatedAt = DateTime.UtcNow
+        }).ToList();
+        
+        DbContext.StuffItems.AddRange(recentItems);
+        await DbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Act
+        await stuffDoer.DoStuffAAsync();
+
+        // Assert
+        var remainingCount = await DbContext.StuffItems.CountAsync(TestContext.Current.CancellationToken);
+        remainingCount.Should().Be(100);
+
+        stuffDoerLogger.LogEntries.Should().Contain(x =>
+            x.LogLevel == LogLevel.Information &&
+            x.Message.Contains("Removed 1000 old items"));
     }
 }
