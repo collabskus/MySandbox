@@ -1,7 +1,7 @@
 
 ===============================================================================
 ASP.NET PROJECT EXPORT
-Generated: 02/07/2026 11:53:14
+Generated: 02/07/2026 12:04:04
 Project Path: C:\Users\kushal\source\repos\MySandbox
 ===============================================================================
 
@@ -117,6 +117,8 @@ C:\USERS\KUSHAL\SOURCE\REPOS\MYSANDBOX
 |   |           |   SQLitePCLRaw.core.dll
 |   |           |   SQLitePCLRaw.provider.e_sqlite3.dll
 |   |           |   stuff.db
+|   |           |   stuff.db-shm
+|   |           |   stuff.db-wal
 |   |           |   
 |   |           \---runtimes
 |   |               +---browser-wasm
@@ -3712,7 +3714,7 @@ public class TestSeedDataOptions
 
 
 ===============================================================================
-EXPORT COMPLETED: 02/07/2026 11:53:21
+EXPORT COMPLETED: 02/07/2026 12:04:11
 Total Files Exported: 27
 Output File: .\docs\\llm\\dump.txt
 ===============================================================================
