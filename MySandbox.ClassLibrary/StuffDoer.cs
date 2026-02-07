@@ -6,12 +6,14 @@ namespace MySandbox.ClassLibrary;
 public class StuffDoer(
     ILogger<StuffDoer> logger,
     IStuffRepository repository,
-    IOptions<BusinessRulesOptions> businessRules)
+    IOptions<BusinessRulesOptions> businessRules,
+    IOptions<SeedDataOptions> seedData)
     : ICanDoStuff, ICanDoStuffA, ICanDoStuffB
 {
     private readonly ILogger<StuffDoer> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IStuffRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly BusinessRulesOptions _businessRules = businessRules?.Value ?? throw new ArgumentNullException(nameof(businessRules));
+    private readonly SeedDataOptions _seedData = seedData?.Value ?? throw new ArgumentNullException(nameof(seedData));
 
     public async Task DoStuffAsync()
     {
@@ -49,7 +51,7 @@ public class StuffDoer(
         _logger.LogInformation("Importing sample data with prefix '{Prefix}'",
             _businessRules.BatchOperationPrefix);
 
-        var sampleData = new[] { "Alpha", "Beta", "Gamma" };
+        var sampleData = _seedData.Products;
 
         var existingItems = await _repository.GetAllAsync();
         var existingNames = existingItems.Select(x => x.Name).ToHashSet();
@@ -70,6 +72,6 @@ public class StuffDoer(
         _logger.LogInformation(
             "Import completed: {NewCount} new items added, {SkippedCount} duplicates skipped",
             newItemsAdded,
-            sampleData.Length - newItemsAdded);
+            sampleData.Count - newItemsAdded);
     }
 }

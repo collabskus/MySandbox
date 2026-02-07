@@ -15,7 +15,8 @@ public class StuffDoerTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
 
         await repository.AddAsync("Today Item 1");
         await repository.AddAsync("Today Item 2");
@@ -41,7 +42,8 @@ public class StuffDoerTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create(dataRetentionDays: 30);
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
 
         // Add old item (manually set CreatedAt to simulate old data)
         var oldItem = new StuffItem
@@ -75,7 +77,8 @@ public class StuffDoerTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create(batchOperationPrefix: "Test-");
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
 
         // Act
         await stuffDoer.DoStuffBAsync();
@@ -97,7 +100,8 @@ public class StuffDoerTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
 
         // Pre-add one item
         await repository.AddAsync("Batch-Alpha");
@@ -124,9 +128,10 @@ public class StuffDoerTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
+        var seedData = TestSeedDataOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(null!, repository, businessRules));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(null!, repository, businessRules, seedData));
     }
 
     [Fact]
@@ -135,9 +140,10 @@ public class StuffDoerTests : DatabaseTestBase
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
         var businessRules = TestBusinessRulesOptions.Create();
+        var seedData = TestSeedDataOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, null!, businessRules));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, null!, businessRules, seedData));
     }
 
     [Fact]
@@ -147,8 +153,23 @@ public class StuffDoerTests : DatabaseTestBase
         var stuffDoerLogger = new TestLogger<StuffDoer>();
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
+        var seedData = TestSeedDataOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, repository, null!));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, repository, null!, seedData));
+    }
+
+
+    [Fact]
+    public void Constructor_NullSeedData_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var stuffDoerLogger = new TestLogger<StuffDoer>();
+        var repositoryLogger = new TestLogger<StuffRepository>();
+        var repository = new StuffRepository(repositoryLogger, DbContext);
+        var businessRules = TestBusinessRulesOptions.Create();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, repository, businessRules, null!));
     }
 }

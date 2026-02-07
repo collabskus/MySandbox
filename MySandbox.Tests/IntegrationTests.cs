@@ -14,7 +14,8 @@ public class IntegrationTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
 
         // Act
         await stuffDoer.DoStuffBAsync(); // Imports Batch-Alpha, Batch-Beta, Batch-Gamma

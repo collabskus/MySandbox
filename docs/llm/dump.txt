@@ -1,7 +1,7 @@
 
 ===============================================================================
 ASP.NET PROJECT EXPORT
-Generated: 02/07/2026 10:59:59
+Generated: 02/07/2026 11:53:14
 Project Path: C:\Users\kushal\source\repos\MySandbox
 ===============================================================================
 
@@ -31,6 +31,7 @@ C:\USERS\KUSHAL\SOURCE\REPOS\MYSANDBOX
 |   |   ICanDoStuffB.cs
 |   |   IStuffRepository.cs
 |   |   MySandbox.ClassLibrary.csproj
+|   |   SeedDataOptions.cs
 |   |   StuffDbContext.cs
 |   |   StuffDoer.cs
 |   |   StuffItem.cs
@@ -253,6 +254,7 @@ C:\USERS\KUSHAL\SOURCE\REPOS\MYSANDBOX
 |   |   StuffRepositoryTests.cs
 |   |   TestBusinessRulesOptions.cs
 |   |   TestLogger.cs
+|   |   TestSeedDataOptions.cs
 |   |   
 |   +---bin
 |   |   \---Debug
@@ -411,6 +413,13 @@ C:\USERS\KUSHAL\SOURCE\REPOS\MYSANDBOX
 |   |           |       log_260206203454034.diag
 |   |           |       log_260206212010377.diag
 |   |           |       log_260206212012981.diag
+|   |           |       log_260207163958929.diag
+|   |           |       log_260207164753510.diag
+|   |           |       log_260207164755774.diag
+|   |           |       log_260207164915162.diag
+|   |           |       log_260207164915786.diag
+|   |           |       log_260207165112216.diag
+|   |           |       log_260207165115480.diag
 |   |           |       
 |   |           +---pl
 |   |           |       Microsoft.Testing.Extensions.MSBuild.resources.dll
@@ -1457,6 +1466,20 @@ MODIFIED: 02/06/2026 11:30:53
 
 
 ================================================================================
+FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.ClassLibrary\SeedDataOptions.cs
+SIZE: 0.12 KB
+MODIFIED: 02/07/2026 11:38:49
+================================================================================
+
+namespace MySandbox.ClassLibrary;
+
+public class SeedDataOptions
+{
+    public List<string> Products { get; set; } = new();
+}
+
+
+================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.ClassLibrary\StuffDbContext.cs
 SIZE: 0.78 KB
 MODIFIED: 02/06/2026 11:02:05
@@ -1493,8 +1516,8 @@ public class StuffDbContext(DbContextOptions<StuffDbContext> options) : DbContex
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.ClassLibrary\StuffDoer.cs
-SIZE: 2.62 KB
-MODIFIED: 02/06/2026 11:28:47
+SIZE: 2.74 KB
+MODIFIED: 02/07/2026 11:42:11
 ================================================================================
 
 using Microsoft.Extensions.Logging;
@@ -1505,12 +1528,14 @@ namespace MySandbox.ClassLibrary;
 public class StuffDoer(
     ILogger<StuffDoer> logger,
     IStuffRepository repository,
-    IOptions<BusinessRulesOptions> businessRules)
+    IOptions<BusinessRulesOptions> businessRules,
+    IOptions<SeedDataOptions> seedData)
     : ICanDoStuff, ICanDoStuffA, ICanDoStuffB
 {
     private readonly ILogger<StuffDoer> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IStuffRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly BusinessRulesOptions _businessRules = businessRules?.Value ?? throw new ArgumentNullException(nameof(businessRules));
+    private readonly SeedDataOptions _seedData = seedData?.Value ?? throw new ArgumentNullException(nameof(seedData));
 
     public async Task DoStuffAsync()
     {
@@ -1548,7 +1573,7 @@ public class StuffDoer(
         _logger.LogInformation("Importing sample data with prefix '{Prefix}'",
             _businessRules.BatchOperationPrefix);
 
-        var sampleData = new[] { "Alpha", "Beta", "Gamma" };
+        var sampleData = _seedData.Products;
 
         var existingItems = await _repository.GetAllAsync();
         var existingNames = existingItems.Select(x => x.Name).ToHashSet();
@@ -1569,7 +1594,7 @@ public class StuffDoer(
         _logger.LogInformation(
             "Import completed: {NewCount} new items added, {SkippedCount} duplicates skipped",
             newItemsAdded,
-            sampleData.Length - newItemsAdded);
+            sampleData.Count - newItemsAdded);
     }
 }
 
@@ -1698,8 +1723,8 @@ public class StuffRepository(ILogger<StuffRepository> logger, StuffDbContext dbC
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.Console\appsettings.json
-SIZE: 0.26 KB
-MODIFIED: 02/06/2026 11:28:12
+SIZE: 21.6 KB
+MODIFIED: 02/07/2026 11:41:18
 ================================================================================
 
 {
@@ -1714,12 +1739,1010 @@ MODIFIED: 02/06/2026 11:28:12
   },
   "SeedData": {
     "Products": [
-      "Product A",
-      "Product B",
-      "Product C"
+      "Product 1",
+      "Product 2",
+      "Product 3",
+      "Product 4",
+      "Product 5",
+      "Product 6",
+      "Product 7",
+      "Product 8",
+      "Product 9",
+      "Product 10",
+      "Product 11",
+      "Product 12",
+      "Product 13",
+      "Product 14",
+      "Product 15",
+      "Product 16",
+      "Product 17",
+      "Product 18",
+      "Product 19",
+      "Product 20",
+      "Product 21",
+      "Product 22",
+      "Product 23",
+      "Product 24",
+      "Product 25",
+      "Product 26",
+      "Product 27",
+      "Product 28",
+      "Product 29",
+      "Product 30",
+      "Product 31",
+      "Product 32",
+      "Product 33",
+      "Product 34",
+      "Product 35",
+      "Product 36",
+      "Product 37",
+      "Product 38",
+      "Product 39",
+      "Product 40",
+      "Product 41",
+      "Product 42",
+      "Product 43",
+      "Product 44",
+      "Product 45",
+      "Product 46",
+      "Product 47",
+      "Product 48",
+      "Product 49",
+      "Product 50",
+      "Product 51",
+      "Product 52",
+      "Product 53",
+      "Product 54",
+      "Product 55",
+      "Product 56",
+      "Product 57",
+      "Product 58",
+      "Product 59",
+      "Product 60",
+      "Product 61",
+      "Product 62",
+      "Product 63",
+      "Product 64",
+      "Product 65",
+      "Product 66",
+      "Product 67",
+      "Product 68",
+      "Product 69",
+      "Product 70",
+      "Product 71",
+      "Product 72",
+      "Product 73",
+      "Product 74",
+      "Product 75",
+      "Product 76",
+      "Product 77",
+      "Product 78",
+      "Product 79",
+      "Product 80",
+      "Product 81",
+      "Product 82",
+      "Product 83",
+      "Product 84",
+      "Product 85",
+      "Product 86",
+      "Product 87",
+      "Product 88",
+      "Product 89",
+      "Product 90",
+      "Product 91",
+      "Product 92",
+      "Product 93",
+      "Product 94",
+      "Product 95",
+      "Product 96",
+      "Product 97",
+      "Product 98",
+      "Product 99",
+      "Product 100",
+      "Product 101",
+      "Product 102",
+      "Product 103",
+      "Product 104",
+      "Product 105",
+      "Product 106",
+      "Product 107",
+      "Product 108",
+      "Product 109",
+      "Product 110",
+      "Product 111",
+      "Product 112",
+      "Product 113",
+      "Product 114",
+      "Product 115",
+      "Product 116",
+      "Product 117",
+      "Product 118",
+      "Product 119",
+      "Product 120",
+      "Product 121",
+      "Product 122",
+      "Product 123",
+      "Product 124",
+      "Product 125",
+      "Product 126",
+      "Product 127",
+      "Product 128",
+      "Product 129",
+      "Product 130",
+      "Product 131",
+      "Product 132",
+      "Product 133",
+      "Product 134",
+      "Product 135",
+      "Product 136",
+      "Product 137",
+      "Product 138",
+      "Product 139",
+      "Product 140",
+      "Product 141",
+      "Product 142",
+      "Product 143",
+      "Product 144",
+      "Product 145",
+      "Product 146",
+      "Product 147",
+      "Product 148",
+      "Product 149",
+      "Product 150",
+      "Product 151",
+      "Product 152",
+      "Product 153",
+      "Product 154",
+      "Product 155",
+      "Product 156",
+      "Product 157",
+      "Product 158",
+      "Product 159",
+      "Product 160",
+      "Product 161",
+      "Product 162",
+      "Product 163",
+      "Product 164",
+      "Product 165",
+      "Product 166",
+      "Product 167",
+      "Product 168",
+      "Product 169",
+      "Product 170",
+      "Product 171",
+      "Product 172",
+      "Product 173",
+      "Product 174",
+      "Product 175",
+      "Product 176",
+      "Product 177",
+      "Product 178",
+      "Product 179",
+      "Product 180",
+      "Product 181",
+      "Product 182",
+      "Product 183",
+      "Product 184",
+      "Product 185",
+      "Product 186",
+      "Product 187",
+      "Product 188",
+      "Product 189",
+      "Product 190",
+      "Product 191",
+      "Product 192",
+      "Product 193",
+      "Product 194",
+      "Product 195",
+      "Product 196",
+      "Product 197",
+      "Product 198",
+      "Product 199",
+      "Product 200",
+      "Product 201",
+      "Product 202",
+      "Product 203",
+      "Product 204",
+      "Product 205",
+      "Product 206",
+      "Product 207",
+      "Product 208",
+      "Product 209",
+      "Product 210",
+      "Product 211",
+      "Product 212",
+      "Product 213",
+      "Product 214",
+      "Product 215",
+      "Product 216",
+      "Product 217",
+      "Product 218",
+      "Product 219",
+      "Product 220",
+      "Product 221",
+      "Product 222",
+      "Product 223",
+      "Product 224",
+      "Product 225",
+      "Product 226",
+      "Product 227",
+      "Product 228",
+      "Product 229",
+      "Product 230",
+      "Product 231",
+      "Product 232",
+      "Product 233",
+      "Product 234",
+      "Product 235",
+      "Product 236",
+      "Product 237",
+      "Product 238",
+      "Product 239",
+      "Product 240",
+      "Product 241",
+      "Product 242",
+      "Product 243",
+      "Product 244",
+      "Product 245",
+      "Product 246",
+      "Product 247",
+      "Product 248",
+      "Product 249",
+      "Product 250",
+      "Product 251",
+      "Product 252",
+      "Product 253",
+      "Product 254",
+      "Product 255",
+      "Product 256",
+      "Product 257",
+      "Product 258",
+      "Product 259",
+      "Product 260",
+      "Product 261",
+      "Product 262",
+      "Product 263",
+      "Product 264",
+      "Product 265",
+      "Product 266",
+      "Product 267",
+      "Product 268",
+      "Product 269",
+      "Product 270",
+      "Product 271",
+      "Product 272",
+      "Product 273",
+      "Product 274",
+      "Product 275",
+      "Product 276",
+      "Product 277",
+      "Product 278",
+      "Product 279",
+      "Product 280",
+      "Product 281",
+      "Product 282",
+      "Product 283",
+      "Product 284",
+      "Product 285",
+      "Product 286",
+      "Product 287",
+      "Product 288",
+      "Product 289",
+      "Product 290",
+      "Product 291",
+      "Product 292",
+      "Product 293",
+      "Product 294",
+      "Product 295",
+      "Product 296",
+      "Product 297",
+      "Product 298",
+      "Product 299",
+      "Product 300",
+      "Product 301",
+      "Product 302",
+      "Product 303",
+      "Product 304",
+      "Product 305",
+      "Product 306",
+      "Product 307",
+      "Product 308",
+      "Product 309",
+      "Product 310",
+      "Product 311",
+      "Product 312",
+      "Product 313",
+      "Product 314",
+      "Product 315",
+      "Product 316",
+      "Product 317",
+      "Product 318",
+      "Product 319",
+      "Product 320",
+      "Product 321",
+      "Product 322",
+      "Product 323",
+      "Product 324",
+      "Product 325",
+      "Product 326",
+      "Product 327",
+      "Product 328",
+      "Product 329",
+      "Product 330",
+      "Product 331",
+      "Product 332",
+      "Product 333",
+      "Product 334",
+      "Product 335",
+      "Product 336",
+      "Product 337",
+      "Product 338",
+      "Product 339",
+      "Product 340",
+      "Product 341",
+      "Product 342",
+      "Product 343",
+      "Product 344",
+      "Product 345",
+      "Product 346",
+      "Product 347",
+      "Product 348",
+      "Product 349",
+      "Product 350",
+      "Product 351",
+      "Product 352",
+      "Product 353",
+      "Product 354",
+      "Product 355",
+      "Product 356",
+      "Product 357",
+      "Product 358",
+      "Product 359",
+      "Product 360",
+      "Product 361",
+      "Product 362",
+      "Product 363",
+      "Product 364",
+      "Product 365",
+      "Product 366",
+      "Product 367",
+      "Product 368",
+      "Product 369",
+      "Product 370",
+      "Product 371",
+      "Product 372",
+      "Product 373",
+      "Product 374",
+      "Product 375",
+      "Product 376",
+      "Product 377",
+      "Product 378",
+      "Product 379",
+      "Product 380",
+      "Product 381",
+      "Product 382",
+      "Product 383",
+      "Product 384",
+      "Product 385",
+      "Product 386",
+      "Product 387",
+      "Product 388",
+      "Product 389",
+      "Product 390",
+      "Product 391",
+      "Product 392",
+      "Product 393",
+      "Product 394",
+      "Product 395",
+      "Product 396",
+      "Product 397",
+      "Product 398",
+      "Product 399",
+      "Product 400",
+      "Product 401",
+      "Product 402",
+      "Product 403",
+      "Product 404",
+      "Product 405",
+      "Product 406",
+      "Product 407",
+      "Product 408",
+      "Product 409",
+      "Product 410",
+      "Product 411",
+      "Product 412",
+      "Product 413",
+      "Product 414",
+      "Product 415",
+      "Product 416",
+      "Product 417",
+      "Product 418",
+      "Product 419",
+      "Product 420",
+      "Product 421",
+      "Product 422",
+      "Product 423",
+      "Product 424",
+      "Product 425",
+      "Product 426",
+      "Product 427",
+      "Product 428",
+      "Product 429",
+      "Product 430",
+      "Product 431",
+      "Product 432",
+      "Product 433",
+      "Product 434",
+      "Product 435",
+      "Product 436",
+      "Product 437",
+      "Product 438",
+      "Product 439",
+      "Product 440",
+      "Product 441",
+      "Product 442",
+      "Product 443",
+      "Product 444",
+      "Product 445",
+      "Product 446",
+      "Product 447",
+      "Product 448",
+      "Product 449",
+      "Product 450",
+      "Product 451",
+      "Product 452",
+      "Product 453",
+      "Product 454",
+      "Product 455",
+      "Product 456",
+      "Product 457",
+      "Product 458",
+      "Product 459",
+      "Product 460",
+      "Product 461",
+      "Product 462",
+      "Product 463",
+      "Product 464",
+      "Product 465",
+      "Product 466",
+      "Product 467",
+      "Product 468",
+      "Product 469",
+      "Product 470",
+      "Product 471",
+      "Product 472",
+      "Product 473",
+      "Product 474",
+      "Product 475",
+      "Product 476",
+      "Product 477",
+      "Product 478",
+      "Product 479",
+      "Product 480",
+      "Product 481",
+      "Product 482",
+      "Product 483",
+      "Product 484",
+      "Product 485",
+      "Product 486",
+      "Product 487",
+      "Product 488",
+      "Product 489",
+      "Product 490",
+      "Product 491",
+      "Product 492",
+      "Product 493",
+      "Product 494",
+      "Product 495",
+      "Product 496",
+      "Product 497",
+      "Product 498",
+      "Product 499",
+      "Product 500",
+      "Product 501",
+      "Product 502",
+      "Product 503",
+      "Product 504",
+      "Product 505",
+      "Product 506",
+      "Product 507",
+      "Product 508",
+      "Product 509",
+      "Product 510",
+      "Product 511",
+      "Product 512",
+      "Product 513",
+      "Product 514",
+      "Product 515",
+      "Product 516",
+      "Product 517",
+      "Product 518",
+      "Product 519",
+      "Product 520",
+      "Product 521",
+      "Product 522",
+      "Product 523",
+      "Product 524",
+      "Product 525",
+      "Product 526",
+      "Product 527",
+      "Product 528",
+      "Product 529",
+      "Product 530",
+      "Product 531",
+      "Product 532",
+      "Product 533",
+      "Product 534",
+      "Product 535",
+      "Product 536",
+      "Product 537",
+      "Product 538",
+      "Product 539",
+      "Product 540",
+      "Product 541",
+      "Product 542",
+      "Product 543",
+      "Product 544",
+      "Product 545",
+      "Product 546",
+      "Product 547",
+      "Product 548",
+      "Product 549",
+      "Product 550",
+      "Product 551",
+      "Product 552",
+      "Product 553",
+      "Product 554",
+      "Product 555",
+      "Product 556",
+      "Product 557",
+      "Product 558",
+      "Product 559",
+      "Product 560",
+      "Product 561",
+      "Product 562",
+      "Product 563",
+      "Product 564",
+      "Product 565",
+      "Product 566",
+      "Product 567",
+      "Product 568",
+      "Product 569",
+      "Product 570",
+      "Product 571",
+      "Product 572",
+      "Product 573",
+      "Product 574",
+      "Product 575",
+      "Product 576",
+      "Product 577",
+      "Product 578",
+      "Product 579",
+      "Product 580",
+      "Product 581",
+      "Product 582",
+      "Product 583",
+      "Product 584",
+      "Product 585",
+      "Product 586",
+      "Product 587",
+      "Product 588",
+      "Product 589",
+      "Product 590",
+      "Product 591",
+      "Product 592",
+      "Product 593",
+      "Product 594",
+      "Product 595",
+      "Product 596",
+      "Product 597",
+      "Product 598",
+      "Product 599",
+      "Product 600",
+      "Product 601",
+      "Product 602",
+      "Product 603",
+      "Product 604",
+      "Product 605",
+      "Product 606",
+      "Product 607",
+      "Product 608",
+      "Product 609",
+      "Product 610",
+      "Product 611",
+      "Product 612",
+      "Product 613",
+      "Product 614",
+      "Product 615",
+      "Product 616",
+      "Product 617",
+      "Product 618",
+      "Product 619",
+      "Product 620",
+      "Product 621",
+      "Product 622",
+      "Product 623",
+      "Product 624",
+      "Product 625",
+      "Product 626",
+      "Product 627",
+      "Product 628",
+      "Product 629",
+      "Product 630",
+      "Product 631",
+      "Product 632",
+      "Product 633",
+      "Product 634",
+      "Product 635",
+      "Product 636",
+      "Product 637",
+      "Product 638",
+      "Product 639",
+      "Product 640",
+      "Product 641",
+      "Product 642",
+      "Product 643",
+      "Product 644",
+      "Product 645",
+      "Product 646",
+      "Product 647",
+      "Product 648",
+      "Product 649",
+      "Product 650",
+      "Product 651",
+      "Product 652",
+      "Product 653",
+      "Product 654",
+      "Product 655",
+      "Product 656",
+      "Product 657",
+      "Product 658",
+      "Product 659",
+      "Product 660",
+      "Product 661",
+      "Product 662",
+      "Product 663",
+      "Product 664",
+      "Product 665",
+      "Product 666",
+      "Product 667",
+      "Product 668",
+      "Product 669",
+      "Product 670",
+      "Product 671",
+      "Product 672",
+      "Product 673",
+      "Product 674",
+      "Product 675",
+      "Product 676",
+      "Product 677",
+      "Product 678",
+      "Product 679",
+      "Product 680",
+      "Product 681",
+      "Product 682",
+      "Product 683",
+      "Product 684",
+      "Product 685",
+      "Product 686",
+      "Product 687",
+      "Product 688",
+      "Product 689",
+      "Product 690",
+      "Product 691",
+      "Product 692",
+      "Product 693",
+      "Product 694",
+      "Product 695",
+      "Product 696",
+      "Product 697",
+      "Product 698",
+      "Product 699",
+      "Product 700",
+      "Product 701",
+      "Product 702",
+      "Product 703",
+      "Product 704",
+      "Product 705",
+      "Product 706",
+      "Product 707",
+      "Product 708",
+      "Product 709",
+      "Product 710",
+      "Product 711",
+      "Product 712",
+      "Product 713",
+      "Product 714",
+      "Product 715",
+      "Product 716",
+      "Product 717",
+      "Product 718",
+      "Product 719",
+      "Product 720",
+      "Product 721",
+      "Product 722",
+      "Product 723",
+      "Product 724",
+      "Product 725",
+      "Product 726",
+      "Product 727",
+      "Product 728",
+      "Product 729",
+      "Product 730",
+      "Product 731",
+      "Product 732",
+      "Product 733",
+      "Product 734",
+      "Product 735",
+      "Product 736",
+      "Product 737",
+      "Product 738",
+      "Product 739",
+      "Product 740",
+      "Product 741",
+      "Product 742",
+      "Product 743",
+      "Product 744",
+      "Product 745",
+      "Product 746",
+      "Product 747",
+      "Product 748",
+      "Product 749",
+      "Product 750",
+      "Product 751",
+      "Product 752",
+      "Product 753",
+      "Product 754",
+      "Product 755",
+      "Product 756",
+      "Product 757",
+      "Product 758",
+      "Product 759",
+      "Product 760",
+      "Product 761",
+      "Product 762",
+      "Product 763",
+      "Product 764",
+      "Product 765",
+      "Product 766",
+      "Product 767",
+      "Product 768",
+      "Product 769",
+      "Product 770",
+      "Product 771",
+      "Product 772",
+      "Product 773",
+      "Product 774",
+      "Product 775",
+      "Product 776",
+      "Product 777",
+      "Product 778",
+      "Product 779",
+      "Product 780",
+      "Product 781",
+      "Product 782",
+      "Product 783",
+      "Product 784",
+      "Product 785",
+      "Product 786",
+      "Product 787",
+      "Product 788",
+      "Product 789",
+      "Product 790",
+      "Product 791",
+      "Product 792",
+      "Product 793",
+      "Product 794",
+      "Product 795",
+      "Product 796",
+      "Product 797",
+      "Product 798",
+      "Product 799",
+      "Product 800",
+      "Product 801",
+      "Product 802",
+      "Product 803",
+      "Product 804",
+      "Product 805",
+      "Product 806",
+      "Product 807",
+      "Product 808",
+      "Product 809",
+      "Product 810",
+      "Product 811",
+      "Product 812",
+      "Product 813",
+      "Product 814",
+      "Product 815",
+      "Product 816",
+      "Product 817",
+      "Product 818",
+      "Product 819",
+      "Product 820",
+      "Product 821",
+      "Product 822",
+      "Product 823",
+      "Product 824",
+      "Product 825",
+      "Product 826",
+      "Product 827",
+      "Product 828",
+      "Product 829",
+      "Product 830",
+      "Product 831",
+      "Product 832",
+      "Product 833",
+      "Product 834",
+      "Product 835",
+      "Product 836",
+      "Product 837",
+      "Product 838",
+      "Product 839",
+      "Product 840",
+      "Product 841",
+      "Product 842",
+      "Product 843",
+      "Product 844",
+      "Product 845",
+      "Product 846",
+      "Product 847",
+      "Product 848",
+      "Product 849",
+      "Product 850",
+      "Product 851",
+      "Product 852",
+      "Product 853",
+      "Product 854",
+      "Product 855",
+      "Product 856",
+      "Product 857",
+      "Product 858",
+      "Product 859",
+      "Product 860",
+      "Product 861",
+      "Product 862",
+      "Product 863",
+      "Product 864",
+      "Product 865",
+      "Product 866",
+      "Product 867",
+      "Product 868",
+      "Product 869",
+      "Product 870",
+      "Product 871",
+      "Product 872",
+      "Product 873",
+      "Product 874",
+      "Product 875",
+      "Product 876",
+      "Product 877",
+      "Product 878",
+      "Product 879",
+      "Product 880",
+      "Product 881",
+      "Product 882",
+      "Product 883",
+      "Product 884",
+      "Product 885",
+      "Product 886",
+      "Product 887",
+      "Product 888",
+      "Product 889",
+      "Product 890",
+      "Product 891",
+      "Product 892",
+      "Product 893",
+      "Product 894",
+      "Product 895",
+      "Product 896",
+      "Product 897",
+      "Product 898",
+      "Product 899",
+      "Product 900",
+      "Product 901",
+      "Product 902",
+      "Product 903",
+      "Product 904",
+      "Product 905",
+      "Product 906",
+      "Product 907",
+      "Product 908",
+      "Product 909",
+      "Product 910",
+      "Product 911",
+      "Product 912",
+      "Product 913",
+      "Product 914",
+      "Product 915",
+      "Product 916",
+      "Product 917",
+      "Product 918",
+      "Product 919",
+      "Product 920",
+      "Product 921",
+      "Product 922",
+      "Product 923",
+      "Product 924",
+      "Product 925",
+      "Product 926",
+      "Product 927",
+      "Product 928",
+      "Product 929",
+      "Product 930",
+      "Product 931",
+      "Product 932",
+      "Product 933",
+      "Product 934",
+      "Product 935",
+      "Product 936",
+      "Product 937",
+      "Product 938",
+      "Product 939",
+      "Product 940",
+      "Product 941",
+      "Product 942",
+      "Product 943",
+      "Product 944",
+      "Product 945",
+      "Product 946",
+      "Product 947",
+      "Product 948",
+      "Product 949",
+      "Product 950",
+      "Product 951",
+      "Product 952",
+      "Product 953",
+      "Product 954",
+      "Product 955",
+      "Product 956",
+      "Product 957",
+      "Product 958",
+      "Product 959",
+      "Product 960",
+      "Product 961",
+      "Product 962",
+      "Product 963",
+      "Product 964",
+      "Product 965",
+      "Product 966",
+      "Product 967",
+      "Product 968",
+      "Product 969",
+      "Product 970",
+      "Product 971",
+      "Product 972",
+      "Product 973",
+      "Product 974",
+      "Product 975",
+      "Product 976",
+      "Product 977",
+      "Product 978",
+      "Product 979",
+      "Product 980",
+      "Product 981",
+      "Product 982",
+      "Product 983",
+      "Product 984",
+      "Product 985",
+      "Product 986",
+      "Product 987",
+      "Product 988",
+      "Product 989",
+      "Product 990",
+      "Product 991",
+      "Product 992",
+      "Product 993",
+      "Product 994",
+      "Product 995",
+      "Product 996",
+      "Product 997",
+      "Product 998",
+      "Product 999",
+      "Product 1000"
     ]
   }
 }
+
 
 
 ================================================================================
@@ -1766,8 +2789,8 @@ MODIFIED: 02/06/2026 11:30:52
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.Console\Program.cs
-SIZE: 3.44 KB
-MODIFIED: 02/06/2026 11:39:51
+SIZE: 3.52 KB
+MODIFIED: 02/07/2026 11:43:05
 ================================================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -1834,6 +2857,7 @@ public class Program
 
         // Configure business rules from appsettings.json
         services.Configure<BusinessRulesOptions>(configuration.GetSection("BusinessRules"));
+        services.Configure<SeedDataOptions>(configuration.GetSection("SeedData"));
 
         // Configure DbContext with SQLite
         services.AddDbContext<StuffDbContext>(options =>
@@ -1908,8 +2932,8 @@ public class DatabaseTestBase : IDisposable
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.Tests\IntegrationTests.cs
-SIZE: 2.4 KB
-MODIFIED: 02/06/2026 15:10:03
+SIZE: 2.46 KB
+MODIFIED: 02/07/2026 11:45:14
 ================================================================================
 
 using AwesomeAssertions;
@@ -1928,7 +2952,8 @@ public class IntegrationTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
 
         // Act
         await stuffDoer.DoStuffBAsync(); // Imports Batch-Alpha, Batch-Beta, Batch-Gamma
@@ -2110,8 +3135,8 @@ public class StuffDbContextTests : DatabaseTestBase
 
 ================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.Tests\StuffDoerTests.cs
-SIZE: 5.43 KB
-MODIFIED: 02/06/2026 15:18:32
+SIZE: 6.38 KB
+MODIFIED: 02/07/2026 11:48:51
 ================================================================================
 
 using AwesomeAssertions;
@@ -2131,7 +3156,8 @@ public class StuffDoerTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
 
         await repository.AddAsync("Today Item 1");
         await repository.AddAsync("Today Item 2");
@@ -2157,7 +3183,8 @@ public class StuffDoerTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create(dataRetentionDays: 30);
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
 
         // Add old item (manually set CreatedAt to simulate old data)
         var oldItem = new StuffItem
@@ -2191,7 +3218,8 @@ public class StuffDoerTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create(batchOperationPrefix: "Test-");
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
 
         // Act
         await stuffDoer.DoStuffBAsync();
@@ -2213,7 +3241,8 @@ public class StuffDoerTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
-        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules);
+        var seedData = TestSeedDataOptions.Create();
+        var stuffDoer = new StuffDoer(stuffDoerLogger, repository, businessRules, seedData);
 
         // Pre-add one item
         await repository.AddAsync("Batch-Alpha");
@@ -2240,9 +3269,10 @@ public class StuffDoerTests : DatabaseTestBase
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
         var businessRules = TestBusinessRulesOptions.Create();
+        var seedData = TestSeedDataOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(null!, repository, businessRules));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(null!, repository, businessRules, seedData));
     }
 
     [Fact]
@@ -2251,9 +3281,10 @@ public class StuffDoerTests : DatabaseTestBase
         // Arrange
         var stuffDoerLogger = new TestLogger<StuffDoer>();
         var businessRules = TestBusinessRulesOptions.Create();
+        var seedData = TestSeedDataOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, null!, businessRules));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, null!, businessRules, seedData));
     }
 
     [Fact]
@@ -2263,9 +3294,24 @@ public class StuffDoerTests : DatabaseTestBase
         var stuffDoerLogger = new TestLogger<StuffDoer>();
         var repositoryLogger = new TestLogger<StuffRepository>();
         var repository = new StuffRepository(repositoryLogger, DbContext);
+        var seedData = TestSeedDataOptions.Create();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, repository, null!));
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, repository, null!, seedData));
+    }
+
+
+    [Fact]
+    public void Constructor_NullSeedData_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var stuffDoerLogger = new TestLogger<StuffDoer>();
+        var repositoryLogger = new TestLogger<StuffRepository>();
+        var repository = new StuffRepository(repositoryLogger, DbContext);
+        var businessRules = TestBusinessRulesOptions.Create();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new StuffDoer(stuffDoerLogger, repository, businessRules, null!));
     }
 }
 
@@ -2640,8 +3686,33 @@ public class TestLogger<T> : ILogger<T>
 
 
 
+================================================================================
+FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.Tests\TestSeedDataOptions.cs
+SIZE: 0.38 KB
+MODIFIED: 02/07/2026 11:44:48
+================================================================================
+
+using Microsoft.Extensions.Options;
+using MySandbox.ClassLibrary;
+
+namespace MySandbox.Tests;
+
+public class TestSeedDataOptions
+{
+    public static IOptions<SeedDataOptions> Create(
+        List<string>? products = null)
+    {
+        return Options.Create(new SeedDataOptions
+        {
+            Products = products ?? new List<string> { "Alpha", "Beta", "Gamma" }
+        });
+    }
+}
+
+
+
 ===============================================================================
-EXPORT COMPLETED: 02/07/2026 11:00:06
-Total Files Exported: 25
+EXPORT COMPLETED: 02/07/2026 11:53:21
+Total Files Exported: 27
 Output File: .\docs\\llm\\dump.txt
 ===============================================================================

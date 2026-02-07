@@ -62,6 +62,7 @@ public class Program
 
         // Configure business rules from appsettings.json
         services.Configure<BusinessRulesOptions>(configuration.GetSection("BusinessRules"));
+        services.Configure<SeedDataOptions>(configuration.GetSection("SeedData"));
 
         // Configure DbContext with SQLite
         services.AddDbContext<StuffDbContext>(options =>
