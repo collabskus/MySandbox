@@ -1,7 +1,7 @@
 
 ===============================================================================
 ASP.NET PROJECT EXPORT
-Generated: 02/07/2026 13:36:54
+Generated: 02/07/2026 17:10:11
 Project Path: C:\Users\kushal\source\repos\MySandbox
 ===============================================================================
 
@@ -117,8 +117,6 @@ C:\USERS\KUSHAL\SOURCE\REPOS\MYSANDBOX
 |   |           |   SQLitePCLRaw.core.dll
 |   |           |   SQLitePCLRaw.provider.e_sqlite3.dll
 |   |           |   stuff.db
-|   |           |   stuff.db-shm
-|   |           |   stuff.db-wal
 |   |           |   
 |   |           \---runtimes
 |   |               +---browser-wasm
@@ -214,37 +212,40 @@ C:\USERS\KUSHAL\SOURCE\REPOS\MYSANDBOX
 |   |                   \---native
 |   |                           e_sqlite3.dll
 |   |                           
-|   \---obj
-|       |   MySandbox.Console.csproj.nuget.dgspec.json
-|       |   MySandbox.Console.csproj.nuget.g.props
-|       |   MySandbox.Console.csproj.nuget.g.targets
-|       |   project.assets.json
-|       |   project.nuget.cache
-|       |   
-|       \---Debug
-|           \---net10.0
-|               |   .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
-|               |   apphost.exe
-|               |   MySandbo.FECEBD9F.Up2Date
-|               |   MySandbox.Console.AssemblyInfo.cs
-|               |   MySandbox.Console.AssemblyInfoInputs.cache
-|               |   MySandbox.Console.assets.cache
-|               |   MySandbox.Console.csproj.AssemblyReference.cache
-|               |   MySandbox.Console.csproj.CoreCompileInputs.cache
-|               |   MySandbox.Console.csproj.FileListAbsolute.txt
-|               |   MySandbox.Console.dll
-|               |   MySandbox.Console.GeneratedMSBuildEditorConfig.editorconfig
-|               |   MySandbox.Console.genruntimeconfig.cache
-|               |   MySandbox.Console.GlobalUsings.g.cs
-|               |   MySandbox.Console.pdb
-|               |   MySandbox.Console.sourcelink.json
-|               |   
-|               +---ref
-|               |       MySandbox.Console.dll
-|               |       
-|               \---refint
-|                       MySandbox.Console.dll
-|                       
+|   +---obj
+|   |   |   MySandbox.Console.csproj.nuget.dgspec.json
+|   |   |   MySandbox.Console.csproj.nuget.g.props
+|   |   |   MySandbox.Console.csproj.nuget.g.targets
+|   |   |   project.assets.json
+|   |   |   project.nuget.cache
+|   |   |   
+|   |   \---Debug
+|   |       \---net10.0
+|   |           |   .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
+|   |           |   apphost.exe
+|   |           |   MySandbo.FECEBD9F.Up2Date
+|   |           |   MySandbox.Console.AssemblyInfo.cs
+|   |           |   MySandbox.Console.AssemblyInfoInputs.cache
+|   |           |   MySandbox.Console.assets.cache
+|   |           |   MySandbox.Console.csproj.AssemblyReference.cache
+|   |           |   MySandbox.Console.csproj.CoreCompileInputs.cache
+|   |           |   MySandbox.Console.csproj.FileListAbsolute.txt
+|   |           |   MySandbox.Console.dll
+|   |           |   MySandbox.Console.GeneratedMSBuildEditorConfig.editorconfig
+|   |           |   MySandbox.Console.genruntimeconfig.cache
+|   |           |   MySandbox.Console.GlobalUsings.g.cs
+|   |           |   MySandbox.Console.pdb
+|   |           |   MySandbox.Console.sourcelink.json
+|   |           |   
+|   |           +---ref
+|   |           |       MySandbox.Console.dll
+|   |           |       
+|   |           \---refint
+|   |                   MySandbox.Console.dll
+|   |                   
+|   \---Properties
+|           launchSettings.json
+|           
 +---MySandbox.Tests
 |   |   DatabaseTestBase.cs
 |   |   IntegrationTests.cs
@@ -423,6 +424,8 @@ C:\USERS\KUSHAL\SOURCE\REPOS\MYSANDBOX
 |   |           |       log_260207165112216.diag
 |   |           |       log_260207165115480.diag
 |   |           |       log_260207183550569.diag
+|   |           |       log_260207183738942.diag
+|   |           |       log_260207183743239.diag
 |   |           |       
 |   |           +---pl
 |   |           |       Microsoft.Testing.Extensions.MSBuild.resources.dll
@@ -2990,6 +2993,22 @@ public class Program
 
 
 ================================================================================
+FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.Console\Properties\launchSettings.json
+SIZE: 0.12 KB
+MODIFIED: 02/07/2026 17:10:00
+================================================================================
+
+{
+  "profiles": {
+    "MySandbox.Console": {
+      "commandName": "Project",
+      "commandLineArgs": ""
+    }
+  }
+}
+
+
+================================================================================
 FILE: :\Users\kushal\source\repos\MySandbox\MySandbox.Tests\DatabaseTestBase.cs
 SIZE: 0.77 KB
 MODIFIED: 02/07/2026 13:33:58
@@ -3865,7 +3884,7 @@ public class TestSeedDataOptions
 
 
 ===============================================================================
-EXPORT COMPLETED: 02/07/2026 13:37:00
-Total Files Exported: 27
+EXPORT COMPLETED: 02/07/2026 17:10:17
+Total Files Exported: 28
 Output File: .\docs\llm\dump.txt
 ===============================================================================

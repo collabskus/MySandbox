@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MySandbox.Console": {
+      "commandName": "Project",
+      "commandLineArgs": ""
+    }
+  }
+}
